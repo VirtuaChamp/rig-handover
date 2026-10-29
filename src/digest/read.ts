@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { DigestRow, LogLine, Night, ReadNight } from './types.js';
+import { countByStatus } from './count.js';
+import type { DigestRow, LogLine, Night, ReadNight, ReadNightCounts } from './types.js';
 
 const NIGHT = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -72,14 +73,25 @@ const toRow = ([job, lines]: [string, LogLine[]]): DigestRow => {
   };
 };
 
-export const readNight: ReadNight = (runsDir, night) => {
+const parseNight = (runsDir: string, night: string): { lines: LogLine[]; badLines: number } | null => {
   if (!NIGHT.test(night)) return null;
   const text = readRunLog(join(runsDir, `${night}.jsonl`));
   if (text === null) return null;
   const entries = splitLines(text).map(parseLine);
   const lines = entries.filter((entry): entry is LogLine => entry !== null);
+  return { lines, badLines: entries.length - lines.length };
+};
+
+export const readNight: ReadNight = (runsDir, night) => {
+  const parsed = parseNight(runsDir, night);
+  if (parsed === null) return null;
   return {
-    rows: groupByJob(lines).map(toRow),
-    badLines: entries.length - lines.length,
+    rows: groupByJob(parsed.lines).map(toRow),
+    badLines: parsed.badLines,
   } satisfies Night;
+};
+
+export const readNightCounts: ReadNightCounts = (runsDir, night) => {
+  const parsed = parseNight(runsDir, night);
+  return parsed === null ? null : countByStatus(parsed.lines);
 };

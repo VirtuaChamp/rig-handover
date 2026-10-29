@@ -23,3 +23,7 @@ export type Night = {
 };
 
 export type ReadNight = (runsDir: string, night: string) => Night | null;
+
+export type StatusCounts = Record<LogLine['status'], number>;
+
+export type ReadNightCounts = (runsDir: string, night: string) => StatusCounts | null;
