@@ -1,8 +1,7 @@
-import type { DigestRow, Night } from '../digest/types.js';
+import { markRows } from '../digest/mark.js';
+import type { Night } from '../digest/types.js';
 
 const orDash = (value: string | null): string => value ?? '—';
-
-const needsAttention = (row: DigestRow): boolean => row.retries >= 3 || row.lastStatus === 'fail';
 
 const unreadNote = (count: number): string =>
   count === 1 ? '1 line could not be read' : `${count} lines could not be read`;
@@ -29,8 +28,8 @@ export function DigestView({ night, digest }: { night: string; digest: Night }) 
             </tr>
           </thead>
           <tbody>
-            {digest.rows.map((row) => (
-              <tr class={needsAttention(row) ? 'warn' : undefined}>
+            {markRows(digest.rows).map((row) => (
+              <tr class={row.marked ? 'warn' : undefined}>
                 <td>{row.job}</td>
                 <td>{orDash(row.owner)}</td>
                 <td>{row.runs}</td>
